@@ -393,8 +393,8 @@
 
             // simple diverging color scheme for different broad categories of termination reasons (success, weather, injuries, etc)
             reason2color = d3.scaleLinear()
-                .domain([0, 1, 3, 4, 10, 11, termination_reasons.length])
-                .range(["black", "green", "greenyellow", "red", "yellow", "grey", "darkgrey"])
+                .domain([0, 1, 3, 4, 5, 6, 10, 11, termination_reasons.length])
+                .range(["black", "green", "greenyellow", "blue", "#00a8e0", "red", "yellow", "#636363", "#ebebeb"])
 
             const years = stacked_expedition_data.map(d => (d.year));
             drawStackedChart(stacked_expedition_data, years, termination_reasons);
