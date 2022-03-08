@@ -4,7 +4,8 @@
 
 <head>
     <title>CS333 Demo</title>
-    <link rel="icon" href="https://camo.githubusercontent.com/8c4c02d7de136a775d16d39c743b902112741645bf53f27a57d20d8219ea8d29/68747470733a2f2f75706c6f61642e77696b696d656469612e6f72672f77696b6970656469612f636f6d6d6f6e732f7468756d622f642f64312f4d6f756e745f457665726573745f61735f7365656e5f66726f6d5f4472756b616972325f504c575f656469742e6a70672f3139323070782d4d6f756e745f457665726573745f61735f7365656e5f66726f6d5f4472756b616972325f504c575f656469742e6a7067">
+    <link rel="icon"
+        href="https://camo.githubusercontent.com/8c4c02d7de136a775d16d39c743b902112741645bf53f27a57d20d8219ea8d29/68747470733a2f2f75706c6f61642e77696b696d656469612e6f72672f77696b6970656469612f636f6d6d6f6e732f7468756d622f642f64312f4d6f756e745f457665726573745f61735f7365656e5f66726f6d5f4472756b616972325f504c575f656469742e6a70672f3139323070782d4d6f756e745f457665726573745f61735f7365656e5f66726f6d5f4472756b616972325f504c575f656469742e6a7067">
 </head>
 
 <style>
@@ -12,9 +13,18 @@
         font: 24px sans-serif;
     }
 
+    .legend_label {
+        font: 14px sans-serif;
+    }
+
     .point {
         fill-opacity: 0.8;
         stroke: #000;
+    }
+
+    h1 {
+        font: 40px sans-serif;
+        margin-bottom: 0px;
     }
 
     pre {
@@ -27,7 +37,8 @@
         line-height: 12px;
     }
 
-    td,th {
+    td,
+    th {
         font-family: sans-serif;
         text-align: center;
         padding: 0 5px;
@@ -36,6 +47,7 @@
 
 <body>
 
+    <h1><b>Visualizing Himalayan Expeditions</b></h1>
     <svg id="bar-chart-svg"></svg>
     <svg id="scatterplot-svg"></svg>
     <pre id="expedition-info">Select an expedition to see more information
@@ -176,6 +188,32 @@
                         )
                 );
 
+            const legend_rect_size = 18;
+            const legend_offset = [40, 20];
+
+            // drawing legend
+            svg.selectAll(".legend_color")
+                .data(termination_reasons)
+                .join(
+                    enter => enter.append("rect")
+                        .attr("class", "legend_color")
+                        .attr("x", d => legend_offset[0])
+                        .attr("y", (d, i) => legend_offset[1] + i * (legend_rect_size + 2))
+                        .attr("width", legend_rect_size * 2)
+                        .attr("height", legend_rect_size)
+                        .attr("fill", (d, i) => reason2color(i))
+                );
+            svg.selectAll(".legend_label")
+                .data(termination_reasons)
+                .join(
+                    enter => enter.append("text")
+                        .attr("class", "legend_label")
+                        .attr("x", d => legend_offset[0] + legend_rect_size * 2.2)
+                        .attr("y", (d, i) => legend_offset[1] + i * (legend_rect_size + 2) + 14)
+                        //.attr("fill", (d, i) => reason2color(i))
+                        .text(d => d)
+                );
+
         }
 
         function handleBarClick(event, target) {
@@ -184,6 +222,7 @@
             drawScatterPlot(year);
 
             selectBar(year);
+            selectPoint("");
 
             d3.select("#expedition-info").text("Select an expedition to see more information");
 
@@ -248,16 +287,20 @@
             //console.log(e_id);
             const e_members = members.filter(m => m.expedition_id == e_id);
 
-            plot_svg.selectAll(".point").attr("stroke-width", 1);
-            plot_svg.select(`#eid${e_id}`).attr("stroke-width", 3);
+            selectPoint(e_id);
 
-            d3.select("#expedition-info").text(`Peak: \t\t\t${target.peak_name}\n` + 
+            d3.select("#expedition-info").text(`Peak: \t\t\t${target.peak_name}\n` +
                 `Result: \t\t\t${target.termination_reason}\n` +
                 `Members: \t\t${target.members} (${target.hired_staff} hired staff)\n` +
                 `Basecamp Date: \t${target.basecamp_date}\n` +
                 `Highpoint Date: \t${target.highpoint_date}`);
 
             updateTable(e_members);
+        }
+
+        function selectPoint(e_id) {
+            plot_svg.selectAll(".point").attr("stroke-width", 1);
+            plot_svg.select(`#eid${e_id}`).attr("stroke-width", 3);
         }
 
         function initAxes() {
