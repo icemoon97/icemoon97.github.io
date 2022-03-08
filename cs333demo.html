@@ -34,13 +34,15 @@
 <body>
 
     <svg id="bar-chart-svg"></svg>
-
     <svg id="scatterplot-svg"></svg>
+    <p id="peak-display">Select an expedition to see more information</p>
 
     <!-- <textarea disabled id="expedition-members" rows="25" cols="50"></textarea> -->
 
     <!-- d3 v7 integration -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
+
+
 
     <script>
         const margin = { top: 10, right: 25, bottom: 40, left: 65 };
@@ -162,10 +164,12 @@
                         .data(d => d)
                         .join(
                             enter => enter.append("rect")
+                                .attr("class", "stacked_bar_section")
                                 .attr("x", d => x(d.data.year))
                                 .attr("y", d => y(d[1]))
                                 .attr("height", d => y(d[0]) - y(d[1]))
                                 .attr("width", x.bandwidth())
+                                .attr("id", d => "year" + d.data.year)
                                 .on("click", handleBarClick)
                         )
                 );
@@ -177,7 +181,14 @@
             console.log(year);
             drawScatterPlot(year);
 
-            d3.select("#expedition-members").text("");
+            d3.selectAll(".stacked_bar_section").attr("stroke", null);
+            d3.selectAll(`#year${year}`).attr("stroke", "#000").attr("stroke-width", 3);
+
+            //d3.select("#expedition-members").text("");
+
+            d3.select("#peak-display").text("Select an expedition to see more information");
+
+            updateTable([]);
         }
 
         let yScatter, size, xScatterAxis;
@@ -236,6 +247,8 @@
             //     display_string += `${m.age} \t${m.citizenship} \t${m.expedition_role}\n`;
             // })
             // d3.select("#expedition-members").text(display_string);
+
+            d3.select("#peak-display").text(`Peak: ${target.peak_name}`);
 
             updateTable(e_members);
         }
