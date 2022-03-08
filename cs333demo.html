@@ -17,17 +17,20 @@
         stroke: #000;
     }
 
-    textarea {
-        resize: none;
+    pre {
+        font-family: sans-serif;
+        margin: 4px;
     }
 
     table {
-      font-size: 12px;
-      line-height: 12px;
+        font-size: 12px;
+        line-height: 12px;
     }
-    td, th {
-      text-align: center;
-      padding: 0 5px;
+
+    td,th {
+        font-family: sans-serif;
+        text-align: center;
+        padding: 0 5px;
     }
 </style>
 
@@ -35,9 +38,8 @@
 
     <svg id="bar-chart-svg"></svg>
     <svg id="scatterplot-svg"></svg>
-    <p id="peak-display">Select an expedition to see more information</p>
-
-    <!-- <textarea disabled id="expedition-members" rows="25" cols="50"></textarea> -->
+    <pre id="expedition-info">Select an expedition to see more information
+    </pre>
 
     <!-- d3 v7 integration -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
@@ -176,19 +178,21 @@
 
         }
 
-        function handleBarClick(d, i) {
-            let year = i.data.year;
+        function handleBarClick(event, target) {
+            let year = target.data.year;
             console.log(year);
             drawScatterPlot(year);
 
-            d3.selectAll(".stacked_bar_section").attr("stroke", null);
-            d3.selectAll(`#year${year}`).attr("stroke", "#000").attr("stroke-width", 3);
+            selectBar(year);
 
-            //d3.select("#expedition-members").text("");
-
-            d3.select("#peak-display").text("Select an expedition to see more information");
+            d3.select("#expedition-info").text("Select an expedition to see more information");
 
             updateTable([]);
+        }
+
+        function selectBar(year) {
+            d3.selectAll(".stacked_bar_section").attr("stroke", null);
+            d3.selectAll(`#year${year}`).attr("stroke", "#000").attr("stroke-width", 3);
         }
 
         let yScatter, size, xScatterAxis;
@@ -222,7 +226,8 @@
                 .join(
                     enter => enter.append("circle")
                         .attr("class", "point")
-                        .attr("r", d => size(parseInt(d.members)))
+                        .attr("id", d => `eid${d.expedition_id}`)
+                        .attr("r", d => size(parseInt(d.members) + parseInt(d.hired_staff)))
                         .attr("cx", d => xScatter(d.plot_date))
                         .attr("cy", d => yScatter(d.plot_height))
                         .attr("fill", d => reason2color(termination_reasons.indexOf(d.termination_reason)))
@@ -230,7 +235,8 @@
 
 
                     update => update
-                        .attr("r", d => size(parseInt(d.members)))
+                        .attr("id", d => `eid${d.expedition_id}`)
+                        .attr("r", d => size(parseInt(d.members) + parseInt(d.hired_staff)))
                         .attr("cx", d => xScatter(d.plot_date))
                         .attr("cy", d => yScatter(d.plot_height))
                         .attr("fill", d => reason2color(termination_reasons.indexOf(d.termination_reason)))
@@ -239,16 +245,17 @@
 
         function handleScatterClick(event, target) {
             const e_id = target.expedition_id;
-            console.log(e_id);
+            //console.log(e_id);
             const e_members = members.filter(m => m.expedition_id == e_id);
 
-            // let display_string = ""
-            // e_members.forEach(m => {
-            //     display_string += `${m.age} \t${m.citizenship} \t${m.expedition_role}\n`;
-            // })
-            // d3.select("#expedition-members").text(display_string);
+            plot_svg.selectAll(".point").attr("stroke-width", 1);
+            plot_svg.select(`#eid${e_id}`).attr("stroke-width", 3);
 
-            d3.select("#peak-display").text(`Peak: ${target.peak_name}`);
+            d3.select("#expedition-info").text(`Peak: \t\t\t${target.peak_name}\n` + 
+                `Result: \t\t\t${target.termination_reason}\n` +
+                `Members: \t\t${target.members} (${target.hired_staff} hired staff)\n` +
+                `Basecamp Date: \t${target.basecamp_date}\n` +
+                `Highpoint Date: \t${target.highpoint_date}`);
 
             updateTable(e_members);
         }
@@ -274,7 +281,7 @@
 
             // scale for size of scatterplot bubbles
             size = d3.scaleSqrt()
-                .domain([1, 30])
+                .domain([1, 50])
                 .range([3, 15]);
 
             xScatterAxis = plot_svg.append("g")
@@ -294,6 +301,10 @@
         function updateTable(data) {
             tableDiv.selectAll('table')
                 .data([]).exit().remove();
+
+            if (data.length == 0) {
+                return;
+            }
 
             const tableEnter = tableDiv.append('table')
                 .attr("id", "member-table");
@@ -347,6 +358,7 @@
 
             initAxes();
             drawScatterPlot(1988);
+            selectBar("1988");
 
             members = await d3.csv("cs333data/members.csv"); // takes a bit to load and isn't needed right away
 
