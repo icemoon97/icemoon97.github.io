@@ -1,0 +1,420 @@
+---
+---
+
+<html>
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<head>
+    <title>Himalayan Exploration</title>
+    <link rel="icon"
+        href="https://camo.githubusercontent.com/8c4c02d7de136a775d16d39c743b902112741645bf53f27a57d20d8219ea8d29/68747470733a2f2f75706c6f61642e77696b696d656469612e6f72672f77696b6970656469612f636f6d6d6f6e732f7468756d622f642f64312f4d6f756e745f457665726573745f61735f7365656e5f66726f6d5f4472756b616972325f504c575f656469742e6a70672f3139323070782d4d6f756e745f457665726573745f61735f7365656e5f66726f6d5f4472756b616972325f504c575f656469742e6a7067">
+</head>
+
+<style>
+    .axis-label {
+        font: 24px sans-serif;
+    }
+
+    .legend_label {
+        font: 14px sans-serif;
+    }
+
+    .point {
+        fill-opacity: 0.8;
+        stroke: #000;
+    }
+
+    h1 {
+        font: 40px sans-serif;
+        margin-bottom: 0px;
+    }
+
+    pre {
+        font-family: sans-serif;
+        margin: 4px;
+    }
+
+    table {
+        font-size: 12px;
+        line-height: 12px;
+    }
+
+    td,
+    th {
+        font-family: sans-serif;
+        text-align: center;
+        padding: 0 5px;
+    }
+</style>
+
+<body>
+
+    <h1><b>Visualizing Himalayan Expeditions</b></h1>
+    <svg id="bar-chart-svg"></svg>
+    <svg id="scatterplot-svg"></svg>
+    <pre id="expedition-info">Select an expedition to see more information
+    </pre>
+
+    <!-- d3 v7 integration -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
+
+
+    <script>
+        const margin = { top: 10, right: 25, bottom: 40, left: 65 };
+        const dim = { width: 1200 - margin.left - margin.right, height: 450 - margin.top - margin.bottom };
+        const svg = d3.select("#bar-chart-svg")
+            .attr("width", 1200)
+            .attr("height", 450)
+            // .style("outline", '3px solid green')
+            .append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        // scatterplot svg
+        const plot_margin = { top: 20, right: 20, bottom: 40, left: 65 };
+        const plot_dim = { width: 800 - plot_margin.left - plot_margin.right, height: 350 - plot_margin.top - plot_margin.bottom };
+        const plot_svg = d3.select("#scatterplot-svg")
+            .attr("width", 800)
+            .attr("height", 350)
+            // .style("outline", '3px solid green')
+            .append("g").attr("transform", "translate(" + plot_margin.left + "," + plot_margin.top + ")");
+
+        let peaks, expeditions, members;
+
+        const termination_reasons = ["Unknown", "Success (main peak)", "Success (subpeak)", "Success (claimed)",
+            "Bad weather (storms, high winds)", "Bad conditions (deep snow, avalanching, falling ice, or rock)",
+            "Accident (death or serious injury)", "Illness, AMS, exhaustion, or frostbite", "Lack (or loss) of supplies or equipment",
+            "Lack of time", "Route technically too difficult, lack of experience, strength, or motivation",
+            "Did not reach base camp", "Did not attempt climb", "Attempt rumoured", "Other"];
+
+        let reason2color; // consistent color scheme for bar chart and scatterplot
+
+        function formatExpeditionData() {
+            dict = {};
+
+            // loop through expeditions, count number of each termination reason for each year with a dict
+            expeditions.forEach(e => {
+                const year = parseInt(e.year);
+
+                if (!(year in dict)) {
+                    dict[year] = {};
+                    for (let i = 0; i < termination_reasons.length; i++) {
+                        dict[year][termination_reasons[i]] = 0
+                    }
+                }
+
+                dict[year][e.termination_reason] += 1;
+            });
+
+            // now put data in csv format for graphing
+            const arr = [];
+            for (let year = 1920; year < 2020; year++) {
+                let item = { year: year }
+                for (let i = 0; i < termination_reasons.length; i++) {
+                    const tr = termination_reasons[i];
+                    if (year in dict) {
+                        item[tr] = dict[year][tr];
+                    } else {
+                        item[tr] = 0;
+                    }
+                }
+                arr.push(item);
+            }
+            arr["columns"] = ["year"].concat(termination_reasons);
+
+            return arr;
+        }
+
+        // data is csv format, groups is name of first column, subgroups is array of names of other columns
+        function drawStackedChart(data, groups, subgroups) {
+
+            // Add X axis
+            const x = d3.scaleBand()
+                .domain(groups)
+                .range([0, dim.width])
+                .padding([0.1])
+            const xAxis = d3.axisBottom(x)
+                .tickValues(x.domain().filter(d => !(d % 5)));
+            svg.append("g")
+                .attr("transform", `translate(0, ${dim.height})`)
+                .call(xAxis);
+
+            // creating x axis label
+            svg.append("text")
+                .attr("class", "axis-label")
+                .attr("x", dim.width / 2)
+                .attr("y", dim.height + margin.top + margin.bottom - 10)
+                .style("text-anchor", "middle")
+                .text("Year");
+
+            // Add Y axis
+            const y = d3.scaleLinear()
+                .domain([0, 450])
+                .range([dim.height, 0]);
+            svg.append("g")
+                .call(d3.axisLeft(y));
+
+            // y axis label
+            svg.append("text")
+                .attr("class", "axis-label")
+                .attr("transform", "rotate(-90)")
+                .attr("y", 0 - margin.left)
+                .attr("x", 0 - (dim.height / 2))
+                .attr("dy", "1em")
+                .style("text-anchor", "middle")
+                .text("Total Expeditions");
+
+            //stack the data
+            const stackedData = d3.stack()
+                .keys(subgroups)
+                (data)
+
+            svg.selectAll(".stacked_bar")
+                // Enter in the stack data = loop key per key = group per group
+                .data(stackedData)
+                .join(
+                    enter => enter.append("g")
+                        .attr("class", "stacked_bar")
+                        .attr("fill", (d, i) => reason2color(i))
+                        .selectAll("rect")
+                        // enter a second time = loop subgroup per subgroup to add all rectangles
+                        .data(d => d)
+                        .join(
+                            enter => enter.append("rect")
+                                .attr("class", "stacked_bar_section")
+                                .attr("x", d => x(d.data.year))
+                                .attr("y", d => y(d[1]))
+                                .attr("height", d => y(d[0]) - y(d[1]))
+                                .attr("width", x.bandwidth())
+                                .attr("id", d => "year" + d.data.year)
+                                .on("click", handleBarClick)
+                        )
+                );
+
+            const legend_rect_size = 18;
+            const legend_offset = [40, 20];
+
+            // drawing legend
+            svg.selectAll(".legend_color")
+                .data(termination_reasons)
+                .join(
+                    enter => enter.append("rect")
+                        .attr("class", "legend_color")
+                        .attr("x", d => legend_offset[0])
+                        .attr("y", (d, i) => legend_offset[1] + i * (legend_rect_size + 2))
+                        .attr("width", legend_rect_size * 2)
+                        .attr("height", legend_rect_size)
+                        .attr("fill", (d, i) => reason2color(i))
+                );
+            svg.selectAll(".legend_label")
+                .data(termination_reasons)
+                .join(
+                    enter => enter.append("text")
+                        .attr("class", "legend_label")
+                        .attr("x", d => legend_offset[0] + legend_rect_size * 2.2)
+                        .attr("y", (d, i) => legend_offset[1] + i * (legend_rect_size + 2) + 14)
+                        //.attr("fill", (d, i) => reason2color(i))
+                        .text(d => d)
+                );
+
+        }
+
+        function handleBarClick(event, target) {
+            let year = target.data.year;
+            console.log(year);
+            drawScatterPlot(year);
+
+            selectBar(year);
+            selectPoint("");
+
+            d3.select("#expedition-info").text("Select an expedition to see more information");
+
+            updateTable([]);
+        }
+
+        function selectBar(year) {
+            d3.selectAll(".stacked_bar_section").attr("stroke", null);
+            d3.selectAll(`#year${year}`).attr("stroke", "#000").attr("stroke-width", 3);
+        }
+
+        let yScatter, size, xScatterAxis;
+
+        // draws scatter plot for given year 
+        function drawScatterPlot(year) {
+            let data = expeditions.filter(e => {
+                if (e.highpoint_date != "NA") {
+                    e.plot_date = new Date(Date.parse(e.highpoint_date));
+                } else if (e.basecamp_date != "NA") {
+                    e.plot_date = new Date(Date.parse(e.basecamp_date));
+                } else {
+                    return false;
+                }
+                e.plot_height = parseFloat(e.highpoint_metres);
+
+                return e.year == year && e.plot_height > 5000;
+            });
+
+            data.sort((a, b) => b.members - a.members);
+
+            const dateExtent = [new Date(`${year}-01-01`), new Date(`${year + 1}-01-20`)];
+
+            const xScatter = d3.scaleTime()
+                .domain(dateExtent)
+                .range([0, plot_dim.width])
+            xScatterAxis.call(d3.axisBottom(xScatter));
+
+            plot_svg.selectAll(".point")
+                .data(data)
+                .join(
+                    enter => enter.append("circle")
+                        .attr("class", "point")
+                        .attr("id", d => `eid${d.expedition_id}`)
+                        .attr("r", d => size(parseInt(d.members) + parseInt(d.hired_staff)))
+                        .attr("cx", d => xScatter(d.plot_date))
+                        .attr("cy", d => yScatter(d.plot_height))
+                        .attr("fill", d => reason2color(termination_reasons.indexOf(d.termination_reason)))
+                        .on("click", handleScatterClick),
+
+
+                    update => update
+                        .attr("id", d => `eid${d.expedition_id}`)
+                        .attr("r", d => size(parseInt(d.members) + parseInt(d.hired_staff)))
+                        .attr("cx", d => xScatter(d.plot_date))
+                        .attr("cy", d => yScatter(d.plot_height))
+                        .attr("fill", d => reason2color(termination_reasons.indexOf(d.termination_reason)))
+                );
+        }
+
+        function handleScatterClick(event, target) {
+            const e_id = target.expedition_id;
+            //console.log(e_id);
+            const e_members = members.filter(m => m.expedition_id == e_id);
+
+            selectPoint(e_id);
+
+            d3.select("#expedition-info").text(`Peak: \t\t\t${target.peak_name}\n` +
+                `Result: \t\t\t${target.termination_reason}\n` +
+                `Members: \t\t${target.members} (${target.hired_staff} hired staff)\n` +
+                `Basecamp Date: \t${target.basecamp_date}\n` +
+                `Highpoint Date: \t${target.highpoint_date}`);
+
+            updateTable(e_members);
+        }
+
+        function selectPoint(e_id) {
+            plot_svg.selectAll(".point").attr("stroke-width", 1);
+            plot_svg.select(`#eid${e_id}`).attr("stroke-width", 3);
+        }
+
+        function initAxes() {
+            yScatter = d3.scaleLinear()
+                .domain([5000, 9000])
+                .range([plot_dim.height, 0])
+            let yScatterAxis = d3.axisLeft(yScatter).tickFormat(x => `${(x / 1000).toFixed(1)}k`);
+            plot_svg.append("g")
+                .call(yScatterAxis);
+
+
+            // y axis label
+            plot_svg.append("text")
+                .attr("class", "axis-label")
+                .attr("transform", "rotate(-90)")
+                .attr("y", 0 - plot_margin.left)
+                .attr("x", 0 - (plot_dim.height / 2))
+                .attr("dy", "1em")
+                .style("text-anchor", "middle")
+                .text("Highest Altitude Reached (m)");
+
+            // scale for size of scatterplot bubbles
+            size = d3.scaleSqrt()
+                .domain([1, 50])
+                .range([3, 15]);
+
+            xScatterAxis = plot_svg.append("g")
+                .attr("transform", `translate(0, ${plot_dim.height})`);
+
+            // creating x axis label
+            plot_svg.append("text")
+                .attr("class", "axis-label")
+                .attr("x", plot_dim.width / 2)
+                .attr("y", plot_dim.height + plot_margin.top + plot_margin.bottom - 20)
+                .style("text-anchor", "middle")
+                .text("Date");
+        }
+
+        let tableDiv;
+
+        function updateTable(data) {
+            tableDiv.selectAll('table')
+                .data([]).exit().remove();
+
+            if (data.length == 0) {
+                return;
+            }
+
+            const tableEnter = tableDiv.append('table')
+                .attr("id", "member-table");
+
+            // tableEnter.append("colgroup")
+            //     .append("col").attr("style", "width: 15%;") // age
+            //     .append("col").attr("style", "width: 15%;") // sex
+            //     .append("col").attr("style", "width: 35%;") // citizenship
+            //     .append("col").attr("style", "width: 35%;"); // role
+
+            tableEnter.append('thead')
+                .append('tr')
+                .selectAll('th')
+                // Table column headers
+                .data(['Age', 'Sex', 'Citizenship', 'Role', 'Injury'])
+                .enter().append('th')
+                .text(d => d);
+
+            const tr = tableEnter.append('tbody').selectAll("tr")
+                .data(data)
+                .enter().append("tr");
+
+            const td = tr.selectAll("td")
+                .data(d => [d.age, d.sex, d.citizenship, d.expedition_role, d.injury_type])
+                .enter().append("td")
+                .text(d => {
+                    if (d == "NA") {
+                        return "-"
+                    } else {
+                        return d
+                    }
+                });
+        }
+
+        let stacked_expedition_data;
+
+        async function ready() {
+            // load files async; store the values so we can use them later
+            peaks = await d3.csv("peaks.csv");
+            expeditions = await d3.csv("expeditions.csv");
+
+            stacked_expedition_data = formatExpeditionData();
+
+            // simple diverging color scheme for different broad categories of termination reasons (success, weather, injuries, etc)
+            reason2color = d3.scaleLinear()
+                .domain([0, 1, 3, 4, 5, 6, 10, 11, termination_reasons.length])
+                .range(["black", "green", "greenyellow", "blue", "#00a8e0", "red", "yellow", "#636363", "#ebebeb"])
+
+            const years = stacked_expedition_data.map(d => (d.year));
+            drawStackedChart(stacked_expedition_data, years, termination_reasons);
+
+            initAxes();
+            drawScatterPlot(1988);
+            selectBar("1988");
+
+            members = await d3.csv("members.csv"); // takes a bit to load and isn't needed right away
+
+            tableDiv = d3.select('body').append('div').attr('id', 'table-container');
+        }
+
+        ready();
+
+    </script>
+
+</body>
+
+</html>
