@@ -3,7 +3,7 @@ title:
 layout: default
 permalink: /projects/
 published: true
-display_categories: [Fun, Hackathon, Other]
+display_categories: [Machine Learning, Data Visualization, Misc, Hackathon]
 ---
 
 {%- for category in page.display_categories %}
