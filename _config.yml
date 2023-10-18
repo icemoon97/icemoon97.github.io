@@ -5,7 +5,6 @@ description: CS @ Northwestern
 
 baseurl: "" #name of GitHub repository
 url: "" #custom url to be used instead of GitHub repository
-email: #
 
 # Pagination
 paginate: 4
@@ -13,6 +12,7 @@ permalink: /blog/:year/:title/
 paginate_path: /blog/page:num/
 
 # Social media links in footer
+email: "julianbaldwin@u.northwestern.edu"
 # twitter: "#"
 linkedin: "julian-baldwin"
 # stackoverflow: "#"
@@ -43,11 +43,6 @@ collections:
   projects:
     output: true
     permalink: /projects/:name/
-    order:
-      - WASMredex.md
-      - Advent.md
-      - GiftWhisperer.md
-      - BadHacks.md
 
 sass:
   sass_dir: /assets/css/_sass
