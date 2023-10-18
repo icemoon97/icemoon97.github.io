@@ -6,45 +6,7 @@ published: true
 display_categories: [Fun, Hackathon, Other]
 ---
 
-<!-- <div class="ProjectContainer">
-
-	<div class="gallery">
-
-  {% for project in site.projects %}
-
-
-  <div class="projectTile">
-    {% if project.redirect %}
-    <a href="{{ project.redirect }}" target="_blank">
-    {% else %}
-    <a href="{{ project.url | prepend: site.baseurl | prepend: site.url }}">
-    {% endif %}
-    {% if project.thumbnail %}
-    <div class="thumbnail">
-      <img src="{{ project.thumbnail | prepend: '/assets/images/' | relative_url }}">
-    </div>
-    {% endif %}
-    <div class="tileBody">
-      <h2>{{ project.title }}</h2>
-      <p>{{ project.description }}</p>
-    </div>
-    </a>
-  </div>
-
-  {% endfor %}
-
-	</div>
-
-</div> -->
-
 <style>
-
-/* body {
-    font-family: Arial, sans-serif;
-    background-color: #f5f5f5;
-    margin: 0;
-    padding: 0;
-} */
 
 .projects-section {
     max-width: 1200px;
@@ -90,7 +52,7 @@ display_categories: [Fun, Hackathon, Other]
 }
 
 .project-card:hover .project-details h2 {
-    color: #007bff; /* Change this to your preferred highlight color */
+    color: #007bff;
 }
 
 .project-details p {
@@ -99,8 +61,8 @@ display_categories: [Fun, Hackathon, Other]
 }
 
 .section-title {
-    font-size: 24px; /* Adjust based on your preference */
-    text-transform: uppercase; /* Converts text to all capital letters */
+    font-size: 24px;
+    text-transform: uppercase;
     margin-bottom: 15px;
     position: relative;
     display: inline-block;
@@ -113,7 +75,7 @@ display_categories: [Fun, Hackathon, Other]
     bottom: -10px;
     height: 3px;
     width: 100%;
-    background-color: #333; /* Change to your preferred underline color */
+    background-color: #333;
 }
 
 
@@ -123,7 +85,7 @@ display_categories: [Fun, Hackathon, Other]
 <div class="projects-section">
   <h2 class="section-title">{{ category }}</h2>
   {%- assign categorized_projects = site.projects | where: "category", category -%}
-  <!-- {%- assign sorted_projects = categorized_projects | sort: "importance" %} -->
+  {%- assign sorted_projects = categorized_projects | sort: "order" %}
 
   {%- for project in sorted_projects -%}
 
@@ -144,53 +106,3 @@ display_categories: [Fun, Hackathon, Other]
 
 </div>
 {% endfor %}
-
-<!-- <div class="projects-section">
-  <h2 class="section-title">Hackathons</h2>
-
-  <a href="" class="project-card-link">
-    <div class="project-card">
-      <img src="{{ 'project-thumbnails/aoc.png' | prepend: '/assets/images/' | relative_url }}">
-      <div class="project-details">
-        <h2>Advent of Code</h2>
-        <p>Participated in yearly programming challenge series since 2017</p>
-      </div>
-    </div>
-  </a>
-
-  <a href="https://github.com/icemoon97/web-assembly-redex" class="project-card-link">
-    <div class="project-card">
-      <img src="{{ 'project-thumbnails/webassembly_logo.jpg' | prepend: '/assets/images/' | relative_url }}">
-      <div class="project-details">
-        <h2>WASM Redex</h2>
-        <p>Working WebAssembly specification built in PLT Redex</p>
-      </div>
-    </div>
-  </a>
-
-</div>
-
-<div class="projects-section">
-  <h2 class="section-title">Just for fun</h2>
-
-  <a href="" class="project-card-link">
-    <div class="project-card">
-      <img src="{{ 'project-thumbnails/aoc.png' | prepend: '/assets/images/' | relative_url }}">
-      <div class="project-details">
-        <h2>Advent of Code</h2>
-        <p>Participated in yearly programming challenge series since 2017</p>
-      </div>
-    </div>
-  </a>
-
-  <a href="https://github.com/icemoon97/web-assembly-redex" class="project-card-link">
-    <div class="project-card">
-      <img src="{{ 'project-thumbnails/webassembly_logo.jpg' | prepend: '/assets/images/' | relative_url }}">
-      <div class="project-details">
-        <h2>WASM Redex</h2>
-        <p>Working WebAssembly specification built in PLT Redex</p>
-      </div>
-    </div>
-  </a>
-
-</div> -->
