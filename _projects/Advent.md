@@ -2,6 +2,7 @@
 layout: post
 title: Advent of Code
 description: Participated in yearly programming challenge series since 2017
+category: Other
 thumbnail: project-thumbnails/aoc.png
 ---
 ***
