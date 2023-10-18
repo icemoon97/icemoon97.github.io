@@ -8,7 +8,7 @@ $spacing-unit:     30px;
 $light-gray: gray;
 $text-color:       #333;
 $background-color: #fdfdfd;
-$brand-color:      #60c17d;
+$brand-color:      #d17237;
 $projectbox-text:  #1e2126;
 
 // Color scheme for light
@@ -18,5 +18,5 @@ $text-color: #333;
 
 // Color scheme for dark modes
 $body-bg-dark: #23272d;
-$projectbox-dark: lighten(#98a0ac, 2%);
-$text-color-dark: #98a0ac;
+$projectbox-dark: darken(#23272d, 2%);
+$text-color-dark: #777777;
